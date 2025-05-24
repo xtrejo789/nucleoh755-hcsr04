@@ -119,7 +119,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  SystemCoreClockUpdate();  // 🔁 Actualiza el valor global correcto del reloj
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -154,11 +154,13 @@ Error_Handler();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   printf("Initializing...\r\n");
-  sr04.trig_port = GPIOB;
-  sr04.trig_pin = GPIO_PIN_7;
+  sr04.trig_port = GPIOE;
+  sr04.trig_pin = GPIO_PIN_11;
   sr04.echo_htim = &htim1;
   sr04.echo_channel = TIM_CHANNEL_1;
   sr04_init(&sr04);
+  HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);     // Captura con interrupción
+  HAL_TIM_Base_Start_IT(&htim1);                  // Base del timer con interrupción (para detectar overflow)
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -170,8 +172,9 @@ Error_Handler();
     /* USER CODE BEGIN 3 */
 	sr04_trigger(&sr04);
 	HAL_Delay(100);
-	printf("Distance: %lu mm\r\n", sr04.distance);
-	// Alternar el estado de un LED para indicar la recepción
+	printf("Distance: %lu cm\r\n", sr04.distance / 10); // For cm
+	// LED for debug
+	HAL_Delay(100);
 	HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
 	HAL_Delay(100);
   }
@@ -492,31 +495,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void TIM1_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM4_IRQn 0 */
-  // Capture interrupt handling
-  if (__HAL_TIM_GET_FLAG(&htim1, TIM_FLAG_CC1) != RESET)
-  {
-      if (__HAL_TIM_GET_IT_SOURCE(&htim1, TIM_IT_CC1) != RESET)
-      {
-          sr04_read_distance(&sr04);
-      }
-  }
-  // Update interrupt handling
-  if (__HAL_TIM_GET_FLAG(&htim1, TIM_FLAG_UPDATE) != RESET)
-  {
-      if (__HAL_TIM_GET_IT_SOURCE(&htim1, TIM_IT_UPDATE) != RESET)
-      {
-          sr04.tim_update_count++;
-      }
-  }
-  /* USER CODE END TIM4_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim1);
-  /* USER CODE BEGIN TIM4_IRQn 1 */
-
-  /* USER CODE END TIM4_IRQn 1 */
-}
 /* USER CODE END 4 */
 
 /**

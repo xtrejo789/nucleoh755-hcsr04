@@ -11,6 +11,7 @@ void sr04_init(sr04_t *sr04_struct){
   // Enable echo pin
   HAL_TIM_IC_Start_IT(sr04_struct->echo_htim, sr04_struct->echo_channel);
   HAL_TIM_Base_Start_IT(sr04_struct->echo_htim);
+  //printf(">> HCSR04 initialized\r\n");
 }
 
 void sr04_trigger(sr04_t *sr04_struct){
@@ -18,6 +19,8 @@ void sr04_trigger(sr04_t *sr04_struct){
   HAL_GPIO_WritePin(sr04_struct->trig_port, sr04_struct->trig_pin, GPIO_PIN_SET);
   HAL_Delay(1);
   HAL_GPIO_WritePin(sr04_struct->trig_port, sr04_struct->trig_pin, GPIO_PIN_RESET);
+  //printf(">> Sent trigger\r\n");
+
 }
 
 void sr04_read_distance(sr04_t *sr04_struct){
@@ -28,6 +31,7 @@ void sr04_read_distance(sr04_t *sr04_struct){
       sr04_struct->capture_flag = 1;
       sr04_struct->tim_update_count = 0;
       __HAL_TIM_SET_CAPTUREPOLARITY(sr04_struct->echo_htim, sr04_struct->echo_channel, TIM_INPUTCHANNELPOLARITY_FALLING);
+      //printf(">> Case 0\r\n");
       break;
     case 1:
       sr04_struct->end_counter = __HAL_TIM_GET_COUNTER(sr04_struct->echo_htim) + sr04_struct->tim_update_count * sr04_struct->echo_htim->Init.Period;
@@ -40,6 +44,7 @@ void sr04_read_distance(sr04_t *sr04_struct){
       }
       sr04_struct->last_distance = sr04_struct->distance;
       __HAL_TIM_SET_CAPTUREPOLARITY(sr04_struct->echo_htim, sr04_struct->echo_channel, TIM_INPUTCHANNELPOLARITY_RISING);
+      //printf(">> Case 1\r\n");
       break;
   }
 }
