@@ -77,6 +77,10 @@ void Error_Handler(void);
 #define USB_OTG_FS_OVCR_GPIO_Port GPIOG
 #define LD2_Pin GPIO_PIN_1
 #define LD2_GPIO_Port GPIOE
+#define FDCAN1_RX_Pin GPIO_PIN_0
+#define FDCAN1_RX_GPIO_Port GPIOD
+#define FDCAN1_TX_Pin GPIO_PIN_1
+#define FDCAN1_TX_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

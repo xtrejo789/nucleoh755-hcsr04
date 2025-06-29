@@ -1,0 +1,5 @@
+../Core/CAN/CAN.c:12:5:CAN_Init	24	static
+../Core/CAN/CAN.c:33:5:CAN_Filter_Init	48	static
+../Core/CAN/CAN.c:61:6:CAN_Start	16	static
+../Core/CAN/CAN.c:66:6:CAN_Send_Packet	56	static
+../Core/CAN/CAN.c:85:5:CAN_Get_Packet	56	static

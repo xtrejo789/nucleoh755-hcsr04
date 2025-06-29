@@ -22,6 +22,12 @@ C_DEPS :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 Common/Src \
+Core/Application\ Code \
+Core/CAN \
+Core/Console \
+Core/GPIO \
+Core/HCSR04 \
+Core/ODrive \
 Core/Src \
 Core/Startup \
 Drivers/STM32H7xx_HAL_Driver \

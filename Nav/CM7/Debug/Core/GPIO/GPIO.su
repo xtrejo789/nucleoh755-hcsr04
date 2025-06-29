@@ -1,0 +1,4 @@
+../Core/GPIO/GPIO.c:3:6:GPIO_Pin_Setup	16	static
+../Core/GPIO/GPIO.c:47:6:GPIO_Pin_High	16	static
+../Core/GPIO/GPIO.c:52:6:GPIO_Pin_Low	16	static
+../Core/GPIO/GPIO.c:57:6:GPIO_Interrupt_Setup	16	static

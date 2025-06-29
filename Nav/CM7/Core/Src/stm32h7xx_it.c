@@ -56,8 +56,9 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern TIM_HandleTypeDef htim1;
 /* USER CODE BEGIN EV */
+extern TIM_HandleTypeDef htim1;
+extern FDCAN_HandleTypeDef hfdcan1;
 extern sr04_t sr04;
 /* USER CODE END EV */
 
@@ -269,7 +270,10 @@ void TIM1_CC_IRQHandler(void)
 
   /* USER CODE END TIM1_CC_IRQn 1 */
 }
-
+void FDCAN1_IT0_IRQHandler(void)
+{
+    HAL_FDCAN_IRQHandler(&hfdcan1);
+}
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */

@@ -1,0 +1,7 @@
+../Core/ODrive/ODrive.c:11:6:CAN_Setup	48	static
+../Core/ODrive/ODrive.c:49:6:Set_TX_Header	8	static
+../Core/ODrive/ODrive.c:61:6:Set_Controller_Modes	64	static
+../Core/ODrive/ODrive.c:68:6:Set_Axis_Requested_State	64	static
+../Core/ODrive/ODrive.c:74:6:Set_Input_Vel	72	static
+../Core/ODrive/ODrive.c:81:6:Clear_Errors	64	static
+../Core/ODrive/ODrive.c:86:6:ODrive_RX_CallBack	32	static

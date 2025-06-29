@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "hcsr04.h"
+#include "ODrive.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,6 +74,13 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 sr04_t sr04;
+Axis AXIS0;
+FDCAN_HandleTypeDef hfdcan1;
+FDCAN_FilterTypeDef sFilterConfig;
+FDCAN_TxHeaderTypeDef TxHeader;
+FDCAN_RxHeaderTypeDef RxHeader;
+uint8_t TxData[8] = {0x10, 0x34, 0x54, 0x76, 0x98, 0x00, 0x11, 0x22};
+uint8_t RxData[8];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -82,6 +90,7 @@ static void MX_ETH_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_FDCAN1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -152,6 +161,7 @@ Error_Handler();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   MX_TIM1_Init();
+  MX_FDCAN1_Init();
   /* USER CODE BEGIN 2 */
   printf("Initializing...\r\n");
   sr04.trig_port = GPIOE;
@@ -161,6 +171,18 @@ Error_Handler();
   sr04_init(&sr04);
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);     // Captura con interrupción
   HAL_TIM_Base_Start_IT(&htim1);                  // Base del timer con interrupción (para detectar overflow)
+  AXIS0.AXIS_ID = 0x010;
+  AXIS0.hfdcan = &hfdcan1;
+  // Configurar ODrive sobre FDCAN
+  CAN_Setup(&hfdcan1, CAN_BAUDRATE_250_KBPS);
+  HAL_Delay(100);
+
+  // Comandos de prueba al ODrive
+  Set_Controller_Modes(AXIS0, VELOCITY_CONTROL, PASSTHROUGH);
+  Set_Axis_Requested_State(AXIS0, CLOSED_LOOP_CONTROL);
+  Set_Input_Vel(AXIS0, 2, 0);
+  HAL_Delay(1000);
+  Set_Input_Vel(AXIS0, 0, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -170,6 +192,7 @@ Error_Handler();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	 /*
 	sr04_trigger(&sr04);
 	HAL_Delay(100);
 	printf("Distance: %lu cm\r\n", sr04.distance / 10); // For cm
@@ -177,6 +200,20 @@ Error_Handler();
 	HAL_Delay(100);
 	HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
 	HAL_Delay(100);
+	*/
+	  /*
+	  if (HAL_FDCAN_GetRxMessage(&hfdcan1, FDCAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK)
+	  {
+	      printf("CAN ID: %lx\r\n", RxHeader.Identifier);
+	      printf("Data: ");
+	      for (int i = 0; i < 8; i++)
+	      {
+	          printf("0x%02X ", RxData[i]);
+	      }
+	      printf("\r\n");
+	  }
+	  */
+
   }
   /* USER CODE END 3 */
 }
@@ -396,6 +433,79 @@ static void MX_USART3_UART_Init(void)
 
 }
 
+static void MX_FDCAN1_Init(void)
+{
+  hfdcan1.Instance = FDCAN1;
+  hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+  hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
+  hfdcan1.Init.AutoRetransmission = DISABLE;
+  hfdcan1.Init.TransmitPause = DISABLE;
+  hfdcan1.Init.ProtocolException = ENABLE;
+  hfdcan1.Init.NominalPrescaler = 2;
+  hfdcan1.Init.NominalSyncJumpWidth = 8;
+  hfdcan1.Init.NominalTimeSeg1 = 0x1F;
+  hfdcan1.Init.NominalTimeSeg2 = 8;
+  hfdcan1.Init.DataPrescaler = 1;
+  hfdcan1.Init.DataSyncJumpWidth = 1;
+  hfdcan1.Init.DataTimeSeg1 = 1;
+  hfdcan1.Init.DataTimeSeg2 = 1;
+  hfdcan1.Init.MessageRAMOffset = 0;
+  hfdcan1.Init.StdFiltersNbr = 1;
+  hfdcan1.Init.ExtFiltersNbr = 0;
+  hfdcan1.Init.RxFifo0ElmtsNbr = 1;
+  hfdcan1.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan1.Init.RxFifo1ElmtsNbr = 0;
+  hfdcan1.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan1.Init.RxBuffersNbr = 0;
+  hfdcan1.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
+  hfdcan1.Init.TxEventsNbr = 0;
+  hfdcan1.Init.TxBuffersNbr = 0;
+  hfdcan1.Init.TxFifoQueueElmtsNbr = 1;
+  hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+  hfdcan1.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
+  if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  sFilterConfig.IdType = FDCAN_STANDARD_ID;
+  sFilterConfig.FilterIndex = 0;
+  sFilterConfig.FilterType = FDCAN_FILTER_MASK;
+  sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+  sFilterConfig.FilterID1 = 0x000;
+  sFilterConfig.FilterID2 = 0x000;
+
+  HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT, FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
+
+  if (HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if (HAL_FDCAN_Start(&hfdcan1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if (HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  TxHeader.Identifier = 0x111;
+  TxHeader.IdType = FDCAN_STANDARD_ID;
+  TxHeader.TxFrameType = FDCAN_DATA_FRAME;
+  TxHeader.DataLength = FDCAN_DLC_BYTES_12;
+  TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+  TxHeader.BitRateSwitch = FDCAN_BRS_ON;
+  TxHeader.FDFormat = FDCAN_FD_CAN;
+  TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+  TxHeader.MessageMarker = 0x00;
+  HAL_NVIC_SetPriority(FDCAN1_IT0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
+}
+
+
 /**
   * @brief USB_OTG_FS Initialization Function
   * @param None
@@ -465,6 +575,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
+  /* Configure CAN1 TX (PA12) and RX (PA11) */
+  GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF9_FDCAN1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pins : LD1_Pin LD3_Pin */
   GPIO_InitStruct.Pin = LD1_Pin|LD3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -495,6 +613,27 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+    if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET)
+    {
+        FDCAN_RxHeaderTypeDef RxHeader;
+        uint8_t RxData[8];
+
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK)
+        {
+        	extern CAN_RX_Typedef RX;
+            RX.ID = RxHeader.Identifier;
+            RX.data_length = 8;
+            for (int i = 0; i < 8; i++)
+                RX.data[i] = RxData[i];
+
+            // Simulas el CAN_Get_Packet y ODrive_RX_CallBack manualmente
+            ODrive_RX_CallBack(&AXIS0);
+        }
+    }
+}
+
 /* USER CODE END 4 */
 
 /**
